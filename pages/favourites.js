@@ -8,6 +8,8 @@ export default function Favourites() {
 
   const [favouritesList] = useAtom(favouritesAtom);
 
+  if(!favouritesList) return null;
+
   return (
     <Container className="my-4">
 

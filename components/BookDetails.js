@@ -1,93 +1,88 @@
-import {Container, Row, Col} from "react-bootstrap"
-import { Button } from "react-bootstrap";
+import { Container, Row, Col, Button } from "react-bootstrap";
 import { useAtom } from "jotai";
 import { favouritesAtom } from "@/store";
-import { useState } from "react"; 
+import { useState, useEffect } from "react"; 
+import { addToFavourites, removeFromFavourites } from "@/lib/userData";
 
+export default function BookDetails({ book, workId, showFavouriteBtn = true }) {
 
+  const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
 
-export default function BookDetails({book, workId, showFavouriteBtn = true }){
+  const [showAdded, setShowAdded] = useState(false);
 
-    const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
+  useEffect(() => {
+    setShowAdded(favouritesList?.includes(workId));
+  }, [favouritesList, workId]);
 
-    const [showAdded, setShowAdded] = useState(favouritesList.includes(workId));
+  const favouritesClicked = async () => {
 
-    const favouritesClicked = () => {
+    let updatedList;
 
-  if (showAdded) {
-    setFavouritesList(current =>
-      current.filter(fav => fav != workId)
-    );
-    setShowAdded(false);
-  } else {
-    setFavouritesList(current =>
-      [...current, workId]
-    );
-    setShowAdded(true);
-  }
-};
+    if (showAdded) {
+      updatedList = await removeFromFavourites(workId);
+    } else {
+      updatedList = await addToFavourites(workId);
+    }
 
+    setFavouritesList(updatedList);
+  };
 
+  if (!book) return null;
 
-    if (!book) return null; 
+  return (
+    <Container className="my-4">
+      <Row>
 
-    return(
-        <Container className="my-4">
-            <Row>
-            <Col lg="4">
-            <img 
-                onError={(event) => { 
-                event.target.onerror = null; 
-                event.target.src = 
-                "https://placehold.co/400x600?text=Cover+Not+Available"; 
-                }} 
-                className="img-fluid w-100" 
-                src={`https://covers.openlibrary.org/b/id/${book?.covers?.[0]}-L.jpg`} 
-                alt="Cover Image" 
-                /> 
-            <br /> 
-            <br />
-            </Col>
+        <Col lg="4">
+          <img
+            onError={(event) => {
+              event.target.onerror = null;
+              event.target.src = "https://placehold.co/400x600?text=Cover+Not+Available";
+            }}
+            className="img-fluid w-100"
+            src={`https://covers.openlibrary.org/b/id/${book?.covers?.[0]}-L.jpg`}
+            alt="Cover Image"
+          />
+          <br />
+          <br />
+        </Col>
 
-            <Col lg="8">
-                <h3>{book.title}</h3> 
+        <Col lg="8">
+          <h3>{book.title}</h3>
 
-                 {/* Description */}
-                {book.description && (
-                      
-                      <p>
-                        {typeof book.description === "string"
-                            ? book.description
-                            : book.description.value}
-                        </p>
-                    )}
-                <br />
+          {/* Description */}
+          {book.description && (
+            <p>
+              {typeof book.description === "string"
+                ? book.description
+                : book.description.value}
+            </p>
+          )}
 
-                {/* <h5>Characters</h5>  */}
-                            {book.subject_people && book.subject_people.length > 0 && (
-                        <>
-                        <h5>Characters</h5>
-                        {book.subject_people.join(", ")}
-                        <br />
-                        <br />
-                        </>
-                    )}
+          <br />
 
-                    {/* <h5>Settings</h5>  */}
-                            {book.subject_places && book.subject_places.length > 0 && (
-                        <>
-                        <h5>Settings</h5> 
-                        {book.subject_places.join(", ")}
-                        <br />
-                        <br />
-                        </>
-                    )}
-
-                 
-              
-                 {book.links && book.links.length > 0 && (
+          {/* Characters */}
+          {book.subject_people && book.subject_people.length > 0 && (
             <>
-            <h5>More Information</h5>
+              <h5>Characters</h5>
+              {book.subject_people.join(", ")}
+              <br /><br />
+            </>
+          )}
+
+          {/* Settings */}
+          {book.subject_places && book.subject_places.length > 0 && (
+            <>
+              <h5>Settings</h5>
+              {book.subject_places.join(", ")}
+              <br /><br />
+            </>
+          )}
+
+          {/* Links */}
+          {book.links && book.links.length > 0 && (
+            <>
+              <h5>More Information</h5>
               {book.links.map((link, index) => (
                 <span key={index}>
                   <a href={link.url} target="_blank" rel="noopener noreferrer">
@@ -98,19 +93,20 @@ export default function BookDetails({book, workId, showFavouriteBtn = true }){
               ))}
             </>
           )}
-             {showFavouriteBtn && (
 
-                    <Button
-                        variant={showAdded ? "primary" : "outline-primary"}
-                        onClick={favouritesClicked}
-                        className="mt-4"
-                    >
-                        {showAdded ? "+ Favourite (added)" : "+ Favourite"}
-                    </Button>
-                    )}
+          {/* ✅ Favourite Button */}
+          {showFavouriteBtn && (
+            <Button
+              variant={showAdded ? "danger" : "primary"}
+              onClick={favouritesClicked}
+              className="mt-4"
+            >
+              {showAdded ? "Remove Favourite" : "+ Favourite"}
+            </Button>
+          )}
 
-                </Col>
-            </Row>
-        </Container>
-    )
+        </Col>
+      </Row>
+    </Container>
+  );
 }
